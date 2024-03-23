@@ -1,11 +1,9 @@
-import { getDocuments } from "@/lib/doc";
-
-getDocuments();
+import Landing from "./components/Landing";
 
 export default function Home() {
   return (
     <main>
-      <h1 className="text-3xl font-bold">Landing Page</h1>
+      <Landing />
     </main>
   );
 }
