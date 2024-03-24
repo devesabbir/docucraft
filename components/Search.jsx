@@ -1,6 +1,31 @@
-import Image from "next/image";
+"use client";
 
-export default function Search() {
+import useDebounce from "@/hooks/useDebounce";
+import Image from "next/image";
+import { useState } from "react";
+import SearchResults from "./SearchResults";
+
+export default function Search({ docs }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
+  const debounce = useDebounce((value) => {
+    const found = docs.filter((doc) =>
+      doc.title.toLowerCase().includes(value.toLowerCase())
+    );
+    setSearchResults(found);
+  }, 1000);
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    if (!value) {
+      setSearchTerm("");
+      debounce("");
+    }
+    setSearchTerm(value);
+    debounce(value);
+  };
+
   return (
     <div className="relative hidden lg:block lg:max-w-md lg:flex-auto">
       <button
@@ -15,6 +40,8 @@ export default function Search() {
           className="h-5 w-5"
         />
         <input
+          value={searchTerm}
+          onChange={handleSearchChange}
           type="text"
           placeholder="Search..."
           className="flex-1 focus:border-none focus:outline-none"
@@ -24,6 +51,14 @@ export default function Search() {
           <kbd className="font-sans">K</kbd>
         </kbd>
       </button>
+
+      {searchTerm && (
+        <SearchResults
+          results={searchResults}
+          term={searchTerm}
+          onSearchClose={setSearchTerm}
+        />
+      )}
     </div>
   );
 }
