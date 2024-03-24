@@ -1,24 +1,60 @@
 "use client";
 
+import {
+  getDocumentsByAuthor,
+  getDocumentsByCategory,
+  getDocumentsByTag,
+} from "@/utils/doc-utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Sidebar({ docs }) {
   const pathname = usePathname();
+  const [roots, setRoots] = useState([]);
+  const [nonRoots, setNonRoots] = useState({});
 
   useEffect(() => {
     let matchedDocs = docs;
     if (pathname.includes("/tags")) {
       const tag = pathname.split("/")[2];
+      matchedDocs = getDocumentsByTag(docs, tag);
+    } else if (pathname.includes("/author")) {
+      const author = pathname.split("/")[2];
+      matchedDocs = getDocumentsByAuthor(docs, author);
+    } else if (pathname.includes("/categories")) {
+      const category = pathname.split("/")[2];
+      matchedDocs = getDocumentsByCategory(docs, category);
     }
-  }, [docs, pathname]);
 
-  const roots = docs.filter((doc) => !doc.parent);
-  const nonRoots = Object.groupBy(
-    docs.filter((doc) => doc.parent),
-    ({ parent }) => parent
-  );
+    const roots = matchedDocs.filter((doc) => !doc.parent);
+    const nonRoots = Object.groupBy(
+      matchedDocs.filter((doc) => doc.parent),
+      ({ parent }) => parent
+    );
+
+    const nonRootsKeys = Reflect.ownKeys(nonRoots);
+    nonRootsKeys.forEach((key) => {
+      const foundInRoots = roots.find((root) => root.id === key);
+      if (!foundInRoots) {
+        const foundInDocs = docs.find((doc) => doc.id === key);
+        roots.push(foundInDocs);
+      }
+    });
+
+    roots.sort((a, b) => {
+      if (a.order < b.order) {
+        return -1;
+      } else if (a.order > b.order) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    setRoots([...roots]);
+    setNonRoots({ ...nonRoots });
+  }, [docs, pathname]);
 
   return (
     <nav className="lg:block my-10">
